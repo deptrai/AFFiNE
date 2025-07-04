@@ -1,4 +1,4 @@
-import type { CopilotSessionType } from '@affine/graphql';
+import type { CopilotChatHistoryFragment } from '@affine/graphql';
 import {
   menu,
   popMenu,
@@ -50,7 +50,7 @@ export class ChatInputPreference extends SignalWatcher(
   `;
 
   @property({ attribute: false })
-  accessor session!: CopilotSessionType | null | undefined;
+  accessor session!: CopilotChatHistoryFragment | null | undefined;
 
   @property({ attribute: false })
   accessor onModelChange: ((modelId: string) => void) | undefined;
