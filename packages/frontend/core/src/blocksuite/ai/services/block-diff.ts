@@ -4,11 +4,7 @@ import {
   BlockMarkdownAdapterMatcherIdentifier,
   MarkdownAdapter,
 } from '@blocksuite/affine-shared/adapters';
-import {
-  type Container,
-  createIdentifier,
-  type ServiceProvider,
-} from '@blocksuite/global/di';
+import { type Container, createIdentifier } from '@blocksuite/global/di';
 import { LiveData } from '@toeverything/infra';
 import type { Subscription } from 'rxjs';
 
@@ -93,6 +89,13 @@ export interface BlockDiffProvider {
   setChangedMarkdown(changedMarkdown: string): void;
 
   /**
+   * Apply the diff to the doc
+   * @param doc - The doc
+   * @param changedMarkdown - The changed markdown
+   */
+  apply(doc: Store, changedMarkdown: string): Promise<void>;
+
+  /**
    * Clear the diff map
    */
   clearDiff(): void;
@@ -140,9 +143,8 @@ export interface BlockDiffProvider {
   /**
    * Get the markdown from the doc
    * @param doc - The doc
-   * @param provider - The provider
    */
-  getMarkdownFromDoc(doc: Store, provider: ServiceProvider): Promise<string>;
+  getMarkdownFromDoc(doc: Store): Promise<string>;
 
   /**
    * Get the index of a block in the doc
@@ -203,6 +205,13 @@ export class BlockDiffService extends Extension implements BlockDiffProvider {
   }
 
   setChangedMarkdown(changedMarkdown: string) {
+    this.changedMarkdown = changedMarkdown;
+    this.clearRejects();
+    this._refreshDiff();
+  }
+
+  async apply(doc: Store, changedMarkdown: string) {
+    this.originalMarkdown = await this.getMarkdownFromDoc(doc);
     this.changedMarkdown = changedMarkdown;
     this.clearRejects();
     this._refreshDiff();
@@ -366,10 +375,15 @@ export class BlockDiffService extends Extension implements BlockDiffProvider {
     );
   }
 
-  getMarkdownFromDoc = async (doc: Store, provider: ServiceProvider) => {
+  getMarkdownFromDoc = async (doc: Store) => {
+    const cloned = doc.provider.container.clone();
+    cloned.addImpl(
+      BlockMarkdownAdapterMatcherIdentifier,
+      blockTagMarkdownAdapterMatcher
+    );
     const job = doc.getTransformer();
     const snapshot = job.docToSnapshot(doc);
-    const adapter = new MarkdownAdapter(job, provider);
+    const adapter = new MarkdownAdapter(job, cloned.provider());
     if (!snapshot) {
       return 'Failed to get markdown from doc';
     }
@@ -388,31 +402,16 @@ export class BlockDiffWatcher extends LifeCycleWatcher {
 
   private _blockUpdatedSubscription: Subscription | null = null;
 
-  private _provider: ServiceProvider | null = null;
-
   override created() {
     super.created();
-    const cloned = this.std.store.provider.container.clone();
-    cloned.addImpl(
-      BlockMarkdownAdapterMatcherIdentifier,
-      blockTagMarkdownAdapterMatcher
-    );
-    this._provider = cloned.provider();
   }
 
   private readonly _refreshOriginalMarkdown = async () => {
     const diffService = this.std.get(BlockDiffProvider);
-    if (
-      !diffService.hasDiff() ||
-      !this._provider ||
-      diffService.isBatchingApply
-    ) {
+    if (!diffService.hasDiff() || diffService.isBatchingApply) {
       return;
     }
-    const markdown = await diffService.getMarkdownFromDoc(
-      this.std.store,
-      this._provider
-    );
+    const markdown = await diffService.getMarkdownFromDoc(this.std.store);
     if (markdown) {
       diffService.setOriginalMarkdown(markdown);
     }

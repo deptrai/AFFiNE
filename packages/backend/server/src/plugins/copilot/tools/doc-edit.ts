@@ -50,7 +50,7 @@ Important Instructions:
 
 Example Input Document:
 \`\`\`md
-<!-- block_id=block-001 type=h1 -->
+<!-- block_id=block-001 type=paragraph -->
 # My Holiday Plan
 
 <!-- block_id=block-002 type=paragraph -->
@@ -60,15 +60,24 @@ I plan to travel to Paris, France, where I will visit the Eiffel Tower, the Louv
 I love Paris.
 
 <!-- block_id=block-004 type=paragraph -->
-This plan has been brewing for a long time, but I always postponed it because I was too busy with work.
+## Reason for the delay
 
 <!-- block_id=block-005 type=paragraph -->
-- Book flight tickets
-- Reserve a hotel
-- Prepare visa documents
-- Plan the itinerary
+This plan has been brewing for a long time, but I always postponed it because I was too busy with work.
 
 <!-- block_id=block-006 type=paragraph -->
+## Trip Steps
+
+<!-- block_id=block-007 type=list -->
+- Book flight tickets
+<!-- block_id=block-008 type=list -->
+- Reserve a hotel
+<!-- block_id=block-009 type=list -->
+- Prepare visa documents
+<!-- block_id=block-010 type=list -->
+- Plan the itinerary
+
+<!-- block_id=block-011 type=paragraph -->
 Additionally, I plan to learn some basic French to make communication easier during the trip.
 \`\`\`
 
@@ -91,15 +100,23 @@ I love Paris.
 
 <!-- delete block-004 -->
 
-<!-- block_id=block-005 type=paragraph -->
+<!-- delete block-005 -->
+
+<!-- block_id=block-006 type=paragraph -->
+## Trip Steps
+
+<!-- block_id=block-007 type=list -->
 - 订机票
+<!-- block_id=block-008 type=list -->
 - 预定酒店
+<!-- block_id=block-009 type=list -->
 - 准备签证材料
+<!-- block_id=block-010 type=list -->
 - 规划行程
 
 <!-- existing blocks ... -->
 
-<!-- block_id=block-006 type=paragraph -->
+<!-- block_id=block-011 type=paragraph -->
 **Additionally, I plan to learn some basic French to make communication easier during the trip.**
 \`\`\`
 You should specify the following arguments before the others: [doc_id], [origin_content]
@@ -149,6 +166,7 @@ You should specify the following arguments before the others: [doc_id], [origin_
             content: `<code>${content}</code>\n<update>${code_edit}</update>`,
           },
         ]);
+
         return { result };
       } catch {
         return 'Failed to apply edit to the doc';

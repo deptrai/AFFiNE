@@ -2,12 +2,10 @@ import { WithDisposable } from '@blocksuite/affine/global/lit';
 import { WidgetComponent, WidgetViewExtension } from '@blocksuite/affine/std';
 import type { Store } from '@blocksuite/affine/store';
 import { createLitPortal } from '@blocksuite/affine-components/portal';
-import { BlockMarkdownAdapterMatcherIdentifier } from '@blocksuite/affine-shared/adapters';
 import { css, html, LitElement } from 'lit';
 import { property, query, state } from 'lit/decorators.js';
 import { literal, unsafeStatic } from 'lit/static-html.js';
 
-import { blockTagMarkdownAdapterMatcher } from '../../adapters/block-tag';
 import { BlockDiffProvider } from '../../services/block-diff';
 
 export const AFFINE_BLOCK_DIFF_PLAYGROUND = 'affine-block-diff-playground';
@@ -89,16 +87,7 @@ export class BlockDiffPlaygroundModal extends WithDisposable(LitElement) {
   };
 
   private async getOriginalMarkdown() {
-    const cloned = this.store.provider.container.clone();
-    cloned.addImpl(
-      BlockMarkdownAdapterMatcherIdentifier,
-      blockTagMarkdownAdapterMatcher
-    );
-    const provider = cloned.provider();
-    const markdown = await this.diffService.getMarkdownFromDoc(
-      this.store,
-      provider
-    );
+    const markdown = await this.diffService.getMarkdownFromDoc(this.store);
     return markdown;
   }
 

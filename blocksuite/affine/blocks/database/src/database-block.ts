@@ -47,8 +47,8 @@ import { Slice } from '@blocksuite/store';
 import { autoUpdate } from '@floating-ui/dom';
 import { computed, signal } from '@preact/signals-core';
 import { html, nothing } from 'lit';
-
 import { repeat } from 'lit/directives/repeat.js';
+
 import { popSideDetail } from './components/layout.js';
 import { DatabaseConfigExtension } from './config.js';
 import { EditorHostKey } from './context/host-context.js';

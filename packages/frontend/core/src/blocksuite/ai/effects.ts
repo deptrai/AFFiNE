@@ -53,6 +53,7 @@ import {
   CodeHighlighter,
 } from './components/ai-tools/code-artifact';
 import { DocComposeTool } from './components/ai-tools/doc-compose';
+import { DocEditTool } from './components/ai-tools/doc-edit';
 import { ToolCallCard } from './components/ai-tools/tool-call-card';
 import { ToolFailedCard } from './components/ai-tools/tool-failed-card';
 import { ToolResultCard } from './components/ai-tools/tool-result-card';
@@ -208,6 +209,7 @@ export function registerAIEffects() {
   customElements.define('code-artifact-tool', CodeArtifactTool);
   customElements.define('code-highlighter', CodeHighlighter);
   customElements.define('artifact-preview-panel', ArtifactPreviewPanel);
+  customElements.define('doc-edit-tool', DocEditTool);
 
   customElements.define(AFFINE_AI_PANEL_WIDGET, AffineAIPanelWidget);
   customElements.define(AFFINE_EDGELESS_COPILOT_WIDGET, EdgelessCopilotWidget);

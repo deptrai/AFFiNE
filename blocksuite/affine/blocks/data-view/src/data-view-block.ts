@@ -40,9 +40,9 @@ import { RANGE_SYNC_EXCLUDE_ATTR } from '@blocksuite/std/inline';
 import { Slice } from '@blocksuite/store';
 import { computed, signal } from '@preact/signals-core';
 import { css, nothing, unsafeCSS } from 'lit';
+import { repeat } from 'lit/directives/repeat.js';
 import { html } from 'lit/static-html.js';
 
-import { repeat } from 'lit/directives/repeat.js';
 import { BlockQueryDataSource } from './data-source.js';
 import type { DataViewBlockModel } from './data-view-model.js';
 
@@ -312,8 +312,7 @@ export class DataViewBlockComponent extends CaptionedBlockComponent<DataViewBloc
 
     return html`
       <div contenteditable="false" style="position: relative">
-        ${this.dataViewRootLogic.render()}
-        ${widgets}
+        ${this.dataViewRootLogic.render()} ${widgets}
       </div>
     `;
   }

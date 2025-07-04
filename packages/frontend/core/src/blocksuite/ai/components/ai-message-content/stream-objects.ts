@@ -8,6 +8,7 @@ import type { Signal } from '@preact/signals-core';
 import { css, html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 
+import { BlockDiffProvider } from '../../services/block-diff';
 import type { AffineAIPanelState } from '../../widgets/ai-panel/type';
 import type { StreamObject } from '../ai-chat-messages';
 
@@ -46,6 +47,8 @@ export class ChatContentStreamObjects extends WithDisposable(
       return nothing;
     }
     const imageProxyService = this.host?.store.get(ImageProxyService);
+    const blockDiffService = this.host?.view.std.getOptional(BlockDiffProvider);
+
     switch (streamObject.toolName) {
       case 'web_crawl_exa':
         return html`
@@ -80,6 +83,14 @@ export class ChatContentStreamObjects extends WithDisposable(
             .width=${this.width}
             .imageProxyService=${imageProxyService}
           ></code-artifact-tool>
+        `;
+      case 'doc_edit':
+        return html`
+          <doc-edit-tool
+            .data=${streamObject}
+            .doc=${this.host?.store}
+            .blockDiffService=${blockDiffService}
+          ></doc-edit-tool>
         `;
       default: {
         const name = streamObject.toolName + ' tool calling';
@@ -95,6 +106,8 @@ export class ChatContentStreamObjects extends WithDisposable(
       return nothing;
     }
     const imageProxyService = this.host?.store.get(ImageProxyService);
+    const blockDiffService = this.host?.view.std.getOptional(BlockDiffProvider);
+
     switch (streamObject.toolName) {
       case 'web_crawl_exa':
         return html`
@@ -129,6 +142,15 @@ export class ChatContentStreamObjects extends WithDisposable(
             .width=${this.width}
             .imageProxyService=${imageProxyService}
           ></code-artifact-tool>
+        `;
+      case 'doc_edit':
+        return html`
+          <doc-edit-tool
+            .data=${streamObject}
+            .host=${this.host}
+            .blockDiffService=${blockDiffService}
+            .renderRichText=${this.renderRichText.bind(this)}
+          ></doc-edit-tool>
         `;
       default: {
         const name = streamObject.toolName + ' tool result';
