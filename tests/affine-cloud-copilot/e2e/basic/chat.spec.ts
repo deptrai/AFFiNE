@@ -94,14 +94,14 @@ test.describe('AIBasic/Chat', () => {
   }) => {
     await utils.chatPanel.makeChat(
       page,
-      'Introduce AFFiNE to me. Answer in 50 words.'
+      'Introduce AFFiNE to me. Answer in 500 words.'
     );
 
     // AI Generating
     await utils.chatPanel.waitForHistory(page, [
       {
         role: 'user',
-        content: 'Introduce AFFiNE to me. Answer in 50 words.',
+        content: 'Introduce AFFiNE to me. Answer in 500 words.',
       },
       {
         role: 'assistant',
@@ -113,7 +113,7 @@ test.describe('AIBasic/Chat', () => {
     await utils.chatPanel.waitForHistory(page, [
       {
         role: 'user',
-        content: 'Introduce AFFiNE to me. Answer in 50 words.',
+        content: 'Introduce AFFiNE to me. Answer in 500 words.',
       },
       {
         role: 'assistant',
