@@ -1,0 +1,184 @@
+version: '3.8'
+
+services:
+  affine:
+    image: registry.joyone.vn/affine:latest
+    ports:
+      - "3010:3010"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://affine:affine@postgres:5432/affine
+      - REDIS_SERVER_HOST=redis
+      - REDIS_SERVER_PORT=6379
+      - AFFINE_CONFIG_PATH=/app/config
+    secrets:
+      - source: copilot_openai_key
+        target: /run/secrets/copilot_openai_key
+      - source: copilot_anthropic_key
+        target: /run/secrets/copilot_anthropic_key
+      - source: copilot_gemini_key
+        target: /run/secrets/copilot_gemini_key
+      - source: copilot_perplexity_key
+        target: /run/secrets/copilot_perplexity_key
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        monitor: 60s
+        max_failure_ratio: 0.3
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+        failure_action: pause
+        monitor: 60s
+        max_failure_ratio: 0.3
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.affine.rule=Host(`affine-staging.joyone.vn`)"
+        - "traefik.http.routers.affine.tls=true"
+        - "traefik.http.routers.affine.tls.certresolver=letsencrypt"
+        - "traefik.http.services.affine.loadbalancer.server.port=3010"
+        - "traefik.http.routers.affine.middlewares=affine-headers"
+        - "traefik.http.middlewares.affine-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+        - "traefik.http.middlewares.affine-headers.headers.customrequestheaders.X-Forwarded-For="
+    volumes:
+      - affine_storage:/app/storage
+    networks:
+      - affine_network
+      - traefik_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3010/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=affine
+      - POSTGRES_USER=affine
+      - POSTGRES_PASSWORD=affine
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    networks:
+      - affine_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U affine -d affine"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass affine
+    volumes:
+      - redis_data:/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 256M
+    networks:
+      - affine_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Optional: Database backup service
+  postgres-backup:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=affine
+      - POSTGRES_USER=affine
+      - POSTGRES_PASSWORD=affine
+      - POSTGRES_HOST=postgres
+    volumes:
+      - postgres_backups:/backups
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - affine_network
+    command: |
+      sh -c '
+        while true; do
+          sleep 86400
+          pg_dump -h postgres -U affine -d affine > /backups/backup_$$(date +%Y%m%d_%H%M%S).sql
+          find /backups -name "backup_*.sql" -mtime +7 -delete
+        done
+      '
+    profiles:
+      - with-backup
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  affine_storage:
+    driver: local
+  postgres_backups:
+    driver: local
+
+networks:
+  affine_network:
+    driver: overlay
+    attachable: true
+  traefik_network:
+    external: true
+
+secrets:
+  copilot_openai_key:
+    external: true
+  copilot_anthropic_key:
+    external: true
+  copilot_gemini_key:
+    external: true
+  copilot_perplexity_key:
+    external: true
