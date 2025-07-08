@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  affine-test:
+    image: nginx:alpine
+    ports:
+      - "3010:80"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.affine-test.rule=Host(`affine-staging.joyone.vn`)"
+        - "traefik.http.routers.affine-test.tls=true"
+        - "traefik.http.services.affine-test.loadbalancer.server.port=80"
+    networks:
+      - traefik_network
+    environment:
+      - NGINX_HOST=affine-staging.joyone.vn
+      - NGINX_PORT=80
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=affine
+      - POSTGRES_USER=affine
+      - POSTGRES_PASSWORD=affine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - affine_network
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    networks:
+      - affine_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  affine_network:
+    driver: overlay
+    attachable: true
+  traefik_network:
+    external: true

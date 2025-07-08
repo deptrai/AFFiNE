@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  affine-test:
+    image: nginx:alpine
+    networks:
+      - proxy-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.affine-test-http.rule=Host(`affine-staging.joyone.vn`)"
+        - "traefik.http.routers.affine-test-http.entrypoints=web"
+        - "traefik.http.routers.affine-test-http.service=affine-test-http"
+        - "traefik.http.routers.affine-test-https.rule=Host(`affine-staging.joyone.vn`)"
+        - "traefik.http.routers.affine-test-https.entrypoints=websecure"
+        - "traefik.http.routers.affine-test-https.service=affine-test-https"
+        - "traefik.http.routers.affine-test-https.tls=true"
+        - "traefik.http.routers.affine-test-https.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.affine-test-http.loadbalancer.server.port=80"
+        - "traefik.http.services.affine-test-https.loadbalancer.server.port=80"
+
+networks:
+  proxy-net:
+    external: true
